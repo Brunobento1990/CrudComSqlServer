@@ -13,7 +13,8 @@ namespace CadastroPessoa
             Cadastrar,
             Listar,
             Atualizar,
-            Excluir
+            Excluir,
+            AtualizarNovo
         }
         
         static void Main(string[] args)
@@ -28,6 +29,7 @@ namespace CadastroPessoa
                 Console.WriteLine("- 2 -> Listar pessoas:");
                 Console.WriteLine("- 3 -> Atualizar cadastro de pessoa:");
                 Console.WriteLine("- 4 -> Excluir cadastro de pessoa:");
+                Console.WriteLine("- 5 -> Atualização personalizada:");
                 Console.WriteLine("- 0 -> Sair:");
                 opcao = (Opcao)Convert.ToInt32(Console.ReadLine());
 
@@ -59,9 +61,9 @@ namespace CadastroPessoa
                     {
                         Console.WriteLine("-> Informe o novo nome para " + pessoa.Nome );
                         string nome = Console.ReadLine();
-                        Console.WriteLine("-> Informe o novo CPF para "+pessoa.Cpf);
+                        Console.WriteLine("-> Informe o novo CPF:");
                         string cpf = Console.ReadLine();
-                        Console.WriteLine("-> Informe o novo RG para "+ pessoa.Rg);
+                        Console.WriteLine("-> Informe o novo RG:");
                         string rg = Console.ReadLine();
                         pessoa.Atualizar(id, nome, cpf, rg);
                     }
@@ -98,6 +100,36 @@ namespace CadastroPessoa
                     {
                         Console.WriteLine("-> Cadastro não encontrado!");
                     }
+                }
+                if (opcao == Opcao.AtualizarNovo)
+                {
+                    Console.WriteLine("-> Informe a campo a ser atualizado:");
+                    string campo = Console.ReadLine();
+                    campo = campo.ToUpper();
+                    int coluna = 0;
+                    if (campo == "CPF")
+                    {
+                        coluna = 1;
+                    }
+                    if (campo == "NOME")
+                    {
+                        coluna = 2;
+                    }
+                    if (campo == "RG")
+                    {
+                        coluna = 3;
+                    }
+                    else
+                    {
+                        Console.WriteLine("-> Campo não encontrado!");
+                        return;
+                    }
+                    Console.WriteLine("-> Informe o valor:");
+                    string valor = Console.ReadLine();
+                    Console.WriteLine("-> Informe o Id do cadastro:");
+                    int id = Convert.ToInt32(Console.ReadLine());
+                    Pessoa pessoa = new Pessoa();
+                    pessoa.AtualizaNovo(coluna, valor,id);
                 }
             } while (opcao != Opcao.Sair);
         }
