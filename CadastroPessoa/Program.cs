@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Data;
 using System.Data.Common;
 using System.Data.SqlClient;
 
@@ -14,7 +13,10 @@ namespace CadastroPessoa
             Listar,
             Atualizar,
             Excluir,
-            AtualizarNovo
+            AtualizarNovo,
+            CadastrarTelefone,
+            AtualizarTelefone,
+            ExcluirTelefone
         }
         
         static void Main(string[] args)
@@ -30,6 +32,8 @@ namespace CadastroPessoa
                 Console.WriteLine("- 3 -> Atualizar cadastro de pessoa:");
                 Console.WriteLine("- 4 -> Excluir cadastro de pessoa:");
                 Console.WriteLine("- 5 -> Atualização personalizada:");
+                Console.WriteLine("- 6 -> Cadastrar telefone:");
+                Console.WriteLine("- 7 -> Atualizar telefone:");
                 Console.WriteLine("- 0 -> Sair:");
                 opcao = (Opcao)Convert.ToInt32(Console.ReadLine());
 
@@ -55,17 +59,16 @@ namespace CadastroPessoa
                 {
                     Console.WriteLine("-> Informe o Id da pessoa a ser atualizada: ");
                     int id = Convert.ToInt32(Console.ReadLine());
-                    Pessoa pessoa = new Pessoa();
-                    pessoa = pessoa.Confirmar(id);
+                    var pessoa = AcharPessoaPeloId(id);
                     if (pessoa  != null && pessoa.Id == id)
                     {
                         Console.WriteLine("-> Informe o novo nome para " + pessoa.Nome );
-                        string nome = Console.ReadLine();
+                        pessoa.Nome = Console.ReadLine();
                         Console.WriteLine("-> Informe o novo CPF:");
-                        string cpf = Console.ReadLine();
+                        pessoa.Cpf = Console.ReadLine();
                         Console.WriteLine("-> Informe o novo RG:");
-                        string rg = Console.ReadLine();
-                        pessoa.Atualizar(id, nome, cpf, rg);
+                        pessoa.Rg = Console.ReadLine();
+                        pessoa.Atualizar(pessoa.Id);
                     }
                     else
                     {
@@ -77,8 +80,7 @@ namespace CadastroPessoa
                 {
                     Console.WriteLine("-> Informe o ID da pessoa a ser excluida:");
                     int id = Convert.ToInt32(Console.ReadLine());
-                    Pessoa pessoa = new Pessoa();
-                    pessoa = pessoa.Confirmar(id);
+                    var pessoa = AcharPessoaPeloId(id);
                     if (pessoa != null && pessoa.Id == id)
                     {
                         Console.WriteLine("Nome: " + pessoa.Nome);
@@ -89,7 +91,7 @@ namespace CadastroPessoa
                         if (confirmacao == 1)
                         {
 
-                            Excluir(id);
+                            ExcluirPessoa(id);
                         }
                         else
                         {
@@ -119,7 +121,7 @@ namespace CadastroPessoa
                     {
                         coluna = 3;
                     }
-                    else
+                    if(campo != "RG" && campo != "CPF" && campo != "NOME")
                     {
                         Console.WriteLine("-> Campo não encontrado!");
                         return;
@@ -129,7 +131,68 @@ namespace CadastroPessoa
                     Console.WriteLine("-> Informe o Id do cadastro:");
                     int id = Convert.ToInt32(Console.ReadLine());
                     Pessoa pessoa = new Pessoa();
-                    pessoa.AtualizaNovo(coluna, valor,id);
+                    pessoa.AtualizarPersonalizado(coluna, valor,id);
+                }
+                if (opcao == Opcao.CadastrarTelefone)
+                {
+                    var telefone = new Telefone();
+                    Console.WriteLine("-> Informe o nome da pessoa para vincular ao telefone:");
+                    string nome = Console.ReadLine();
+                    var pessoa = AcharPessoaPeloNome(nome);
+                    if(pessoa == null)
+                    {
+                        Console.WriteLine("-> Informe um nome mais expecífico!");
+                        nome = Console.ReadLine();
+                        pessoa = AcharPessoaPeloNome(nome);
+                    }
+                    else 
+                    {
+
+                        Console.WriteLine("-> Informe o DDD:");
+                        telefone.DDD = Console.ReadLine();
+                        Console.WriteLine("-> Informe o telefone:");
+                        telefone.Numero = Console.ReadLine();
+                        telefone.IdPessoa = pessoa.Id;
+                        telefone.Gravar();
+                    }
+
+                }
+                if (opcao == Opcao.AtualizarTelefone)
+                {
+                    Console.WriteLine("-> Informe o nome da pessoa para atualizar o telefone:");
+                    string nome = Console.ReadLine();
+                    var pessoa = AcharPessoaPeloNome(nome);
+                    if (pessoa != null)
+                    {
+                        Console.WriteLine("-> Informe o id do telefone:");
+                        int idtel = Convert.ToInt32(Console.ReadLine());
+
+                        var telefone = AcharTelefonePeloId(pessoa.Id,idtel);
+                        if (telefone != null)
+                        {
+                            Console.WriteLine("-> Informe o novo DDD:");
+                            telefone.DDD = Console.ReadLine();
+                            Console.WriteLine("-> Informe o novo número:");
+                            telefone.Numero = Console.ReadLine();
+                            telefone.Atualizar(telefone.Id);
+                        }
+                        else
+                        {
+                            Console.WriteLine("-> Cadastro não encontrado!");
+                        }
+
+                    }
+                    else
+                    {
+                        Console.WriteLine("-> Cadastro não encontrado!");
+                    }
+                }
+                if (opcao == Opcao.ExcluirTelefone)
+                {
+                    Console.WriteLine("-> Antes de excluir um telefone, é necessário excluir o cadastro da pessoa!\n\n-> Informe o Id da pessoa a ser excluida:");
+                    int idpessoa = Convert.ToInt32(Console.ReadLine());
+                    int id = Convert.ToInt32(Console.ReadLine());
+                    //var telefone = AcharTelefonePeloId(id);
                 }
             } while (opcao != Opcao.Sair);
         }
@@ -191,7 +254,7 @@ namespace CadastroPessoa
                 Console.WriteLine(e.Errors);
             }
         }
-        static void Excluir(int id)
+        static void ExcluirPessoa(int id)
         {
 
             try
@@ -201,7 +264,128 @@ namespace CadastroPessoa
                 {
 
                     string sql = "delete from Pessoa where id = @id";
-                    SqlCommand sqlComm = new SqlCommand(sql, cnn); 
+                    SqlCommand sqlComm = new SqlCommand(sql, cnn);
+                    sqlComm.Parameters.AddWithValue("@id", id);
+                    sqlComm.Connection.Open();
+                    sqlComm.ExecuteNonQuery();
+                    Console.WriteLine("-> Cadastro excluido!");
+
+                }
+            }
+            catch (SqlException e)
+            {
+                Console.WriteLine(e.Errors);
+            }
+        }
+        static Pessoa AcharPessoaPeloNome(string nome)
+        {
+            var pessoa = new Pessoa();
+
+            try
+            {
+                string Coneccao = @"Integrated Security=SSPI;Persist Security Info=False;Initial Catalog=Bruno;Data Source=ITELABD03\SQLEXPRESS01";
+                using (var cnn = new SqlConnection(Coneccao))
+                {
+
+                    string sql = "select * from Pessoa where Nome = @nome";
+                    SqlCommand sqlComm = new SqlCommand(sql, cnn);
+                    sqlComm.Parameters.AddWithValue("@nome", nome);
+                    sqlComm.Connection.Open();
+                    sqlComm.ExecuteNonQuery();
+                    SqlDataReader rdr = sqlComm.ExecuteReader();
+                    rdr.Read();
+                    pessoa.Id = rdr.GetInt32(0);
+                    pessoa.Nome = rdr.GetString(1);
+                    pessoa.Cpf = rdr.GetString(2);
+                    pessoa.Rg = rdr.GetString(3);
+                    pessoa.Data_Nascimento = rdr.GetString(4);
+                    pessoa.Naturalidade = rdr.GetString(5);
+
+                }
+                return pessoa;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                return null;
+            }
+        }
+        static Pessoa AcharPessoaPeloId(int id)
+        {
+            var pessoa = new Pessoa();
+            try
+            {
+                string Coneccao = @"Integrated Security=SSPI;Persist Security Info=False;Initial Catalog=Bruno;Data Source=ITELABD03\SQLEXPRESS01";
+                using (var cnn = new SqlConnection(Coneccao))
+                {
+
+                    string sql = "select * from Pessoa where id = @id";
+                    SqlCommand sqlComm = new SqlCommand(sql, cnn);
+                    sqlComm.Parameters.AddWithValue("@id", id);
+                    sqlComm.Connection.Open();
+                    sqlComm.ExecuteNonQuery();
+                    SqlDataReader rdr = sqlComm.ExecuteReader();
+                    rdr.Read();
+                    pessoa.Id = rdr.GetInt32(0);
+                    pessoa.Nome = rdr.GetString(1);
+                    pessoa.Cpf = rdr.GetString(2);
+                    pessoa.Rg = rdr.GetString(3);
+                    pessoa.Data_Nascimento = rdr.GetString(4);
+                    pessoa.Naturalidade = rdr.GetString(5);
+
+                }
+                return pessoa;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                return null;
+            }
+
+
+        }
+        static Telefone AcharTelefonePeloId(int id,int idtel)
+        {
+            var telefone = new Telefone();
+
+            try
+            {
+                string Coneccao = @"Integrated Security=SSPI;Persist Security Info=False;Initial Catalog=Bruno;Data Source=ITELABD03\SQLEXPRESS01";
+                using (var cnn = new SqlConnection(Coneccao))
+                {
+
+                    string sql = "select * from Telefone where IdPessoa = @id and Id = @idtel";
+                    SqlCommand sqlComm = new SqlCommand(sql, cnn);
+                    sqlComm.Parameters.AddWithValue("@id", id);
+                    sqlComm.Parameters.AddWithValue("@idtel", idtel);
+                    sqlComm.Connection.Open();
+                    sqlComm.ExecuteNonQuery();
+                    SqlDataReader rdr = sqlComm.ExecuteReader();
+                    rdr.Read();
+                    telefone.Id = rdr.GetInt32(0);
+                    telefone.DDD = rdr.GetString(1);
+                    telefone.Numero = rdr.GetString(2);
+                    telefone.IdPessoa = rdr.GetInt32(3);
+                }
+                return telefone;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                return null;
+            }
+
+        }
+        static void ExcluirTelefone(int id)
+        {
+            try
+            {
+                string Coneccao = @"Integrated Security=SSPI;Persist Security Info=False;Initial Catalog=Bruno;Data Source=ITELABD03\SQLEXPRESS01";
+                using (var cnn = new SqlConnection(Coneccao))
+                {
+
+                    string sql = "delete from Telefone where id = @id";
+                    SqlCommand sqlComm = new SqlCommand(sql, cnn);
                     sqlComm.Parameters.AddWithValue("@id", id);
                     sqlComm.Connection.Open();
                     sqlComm.ExecuteNonQuery();

@@ -43,7 +43,7 @@ namespace CadastroPessoa
             }
 
         }
-        public void Atualizar(int id, string nome, string cpf, string rg)
+        public void Atualizar(int id)
         {
             try
             {
@@ -53,9 +53,9 @@ namespace CadastroPessoa
 
                     string sql = "update Pessoa set Nome = @nome1 ,Cpf = @cpf, Rg = @rg where id = @id";
                     SqlCommand sqlComm = new SqlCommand(sql, cnn); ;
-                    sqlComm.Parameters.AddWithValue("@nome", nome);
-                    sqlComm.Parameters.AddWithValue("@Cpf", cpf);
-                    sqlComm.Parameters.AddWithValue("@rg", rg);
+                    sqlComm.Parameters.AddWithValue("@nome", this.Nome);
+                    sqlComm.Parameters.AddWithValue("@Cpf", this.Cpf);
+                    sqlComm.Parameters.AddWithValue("@rg", this.Rg);
                     sqlComm.Parameters.AddWithValue("@id", id);
                     sqlComm.Connection.Open();
                     sqlComm.ExecuteNonQuery();
@@ -69,7 +69,7 @@ namespace CadastroPessoa
             }
 
         }
-        public void AtualizaNovo(int campo,string valor,int id)
+        public void AtualizarPersonalizado(int campo,string valor,int id)
         {
             try
             {
@@ -119,39 +119,6 @@ namespace CadastroPessoa
                 Console.WriteLine(e.Errors);
             }
         }
-        public Pessoa Confirmar(int id)
-        {
-
-            try
-            {
-                string Coneccao = @"Integrated Security=SSPI;Persist Security Info=False;Initial Catalog=Bruno;Data Source=ITELABD03\SQLEXPRESS01";
-                using (var cnn = new SqlConnection(Coneccao))
-                {
-
-                    string sql = "select * from Pessoa where id = @id";
-                    SqlCommand sqlComm = new SqlCommand(sql, cnn);
-                    sqlComm.Parameters.AddWithValue("@id", id);
-                    sqlComm.Connection.Open();
-                    sqlComm.ExecuteNonQuery();
-                    SqlDataReader rdr = sqlComm.ExecuteReader();
-                    rdr.Read();
-                    this.Id = rdr.GetInt32(0);
-                    this.Nome = rdr.GetString(1);
-                    this.Cpf = rdr.GetString(2);
-                    this.Rg= rdr.GetString(3);
-                    this.Data_Nascimento = rdr.GetString(4);
-                    this.Naturalidade = rdr.GetString(5);
-
-                }
-                return this;
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-                return null;
-            }
-            
-           
-        }
+        
     }
 }
